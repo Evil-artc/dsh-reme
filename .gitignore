@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# local analysis, extracted harness code, session logs, archived notes
+.probe/
+
+# secrets and local env
+.env
+.env.*
+*.pem
+*.key
+
+# build noise
+*.log
+*.tsbuildinfo
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

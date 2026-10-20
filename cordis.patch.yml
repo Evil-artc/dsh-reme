@@ -1,0 +1,81 @@
+# The configuration layer this bundle contributes when a profile lists it.
+#
+# A top-level YAML array of loader patch entries. Every field is optional and
+# has a working default, so an empty `config:` block still mounts the plugin.
+# Override any value from the profile's own cordis.patch.yml by targeting the
+# row id below.
+- insert:
+    - id: reme
+      # Must be the installed package name — the loader imports this specifier.
+      name: dsh-reme
+      config:
+        # ReMe origin. A trailing `/api` is folded in, so both
+        # `http://127.0.0.1:2333` and `http://127.0.0.1:2333/api` work.
+        baseUrl: !!js process.env.REME_BASE_URL ?? 'http://127.0.0.1:2333'
+        # Routes. If a call answers 404 the plugin retries the other spelling
+        # (`/search` <-> `/api/search`) once and remembers what worked.
+        searchPath: /search
+        writePath: /write
+        reindexPath: /reindex
+        # Notes are filed here when the model gives only a name.
+        defaultDigestDir: digest
+        # Rebuild the index after a write so the note is immediately recallable.
+        reindexAfterWrite: true
+        # Per-request timeout, and the tool body timeout.
+        requestTimeoutMs: 30000
+        # Search defaults.
+        defaultLimit: 8
+        maxChunkChars: 1200
+        # Character budget for one part when a write must be split.
+        writeChunkChars: 6000
+        # --- Automatic recall -------------------------------------------------
+        # Inject related memory into every model request without being asked.
+        autoRecall: true
+        # Passages injected per request, and the total characters they may take.
+        recallLimit: 4
+        recallMaxChars: 1500
+        # Drop recalled passages scoring below this.
+        recallMinScore: 0.3
+        # Hard ceiling on one recall search; the search sits on the prompt path,
+        # so this is the most latency automatic recall may ever add.
+        recallTimeoutMs: 400
+        # Inputs shorter than this are never searched for. Four, not eight:
+        # Chinese packs a whole question into 5-7 characters ("进行二期",
+        # "协作语言是什么"), and a floor of eight silently skipped most real
+        # messages. Acknowledgements are excluded by `recallSkipPatterns`
+        # instead, which is the rule that actually targets them.
+        #
+        # NOTE: a key set here overrides the plugin's code default, so the two
+        # must be changed together.
+        recallMinQueryChars: 4
+        # Read-only `reme_memory_status` diagnostic tool. Turn it on when memory
+        # does not seem to be recalled automatically.
+        debugStatusTool: true
+        # --- Automatic extraction ---------------------------------------------
+        # Distil durable facts out of the conversation and write them to ReMe.
+        autoExtract: true
+        # Pace: every N user turns, or early once this many characters buffer.
+        extractEveryTurns: 4
+        extractMinChars: 800
+        # Admission gates. Everything here is biased towards writing less.
+        extractConfidence: 0.6
+        extractMaxWrites: 3
+        # Local similarity (character-bigram Jaccard over name + description)
+        # above which a candidate counts as already remembered. ReMe's own
+        # `/node_search` score is a constant for every lexical hit, so it cannot
+        # be thresholded — the decision is made locally.
+        dedupeThreshold: 0.6
+        # Dedup endpoint path.
+        nodeSearchPath: /node_search
+        # Fail closed: stop writing when dedup lookups keep failing, rather than
+        # degrading into duplicate writes.
+        dedupeCircuitThreshold: 3
+        dedupeCircuitCooldownMs: 60000
+        # Per-session cap, and how many failures abandon one buffered excerpt.
+        writeRateLimitPerHour: 30
+        extractBadRetryMax: 2
+        # Extraction call budget. `extractModel` defaults to the session's model.
+        # `extractMaxTokens` is deliberately left at the code default (4000):
+        # a reasoning trace shares this budget with the JSON, and truncation is
+        # indistinguishable from a parse failure unless the status counter says so.
+        extractTimeoutMs: 20000
