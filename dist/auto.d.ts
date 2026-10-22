@@ -91,6 +91,15 @@ export interface AssembleContextLike {
 interface AssembledContextLike {
     readonly name: string;
     readonly text: string;
+    /**
+     * Preserve `{{…}}` groups literally.
+     *
+     * Recalled memory is arbitrary file content: a note about templates can
+     * legitimately contain `{{page}}`. Without this flag the harness interpolates
+     * the context and throws on the unknown variable, failing the whole prompt
+     * assembly for that turn.
+     */
+    readonly interpolate?: boolean;
 }
 /** `PromptAssembly`, narrowed to the field this module rewrites. */
 export interface PromptAssemblyLike {

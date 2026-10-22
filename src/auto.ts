@@ -130,6 +130,15 @@ export interface AssembleContextLike {
 interface AssembledContextLike {
   readonly name: string
   readonly text: string
+  /**
+   * Preserve `{{…}}` groups literally.
+   *
+   * Recalled memory is arbitrary file content: a note about templates can
+   * legitimately contain `{{page}}`. Without this flag the harness interpolates
+   * the context and throws on the unknown variable, failing the whole prompt
+   * assembly for that turn.
+   */
+  readonly interpolate?: boolean
 }
 
 /** `PromptAssembly`, narrowed to the field this module rewrites. */
@@ -579,7 +588,13 @@ export function registerAutoRecall(
           + `(assemblies=${state.stats.assemblies}, memoHits=${state.stats.memoHits})`,
         )
         const contexts = Array.isArray(result?.contexts) ? result.contexts : []
-        return { ...result, contexts: [...contexts, { name: 'reme-recall', text: recall }] }
+        // `interpolate: false` is required: memory passages are data, and any
+        // `{{name}}` inside them (template syntax, code snippets) must not be
+        // resolved as a prompt variable — an unknown one aborts assembly.
+        return {
+          ...result,
+          contexts: [...contexts, { name: 'reme-recall', text: recall, interpolate: false }],
+        }
       },
     )
 

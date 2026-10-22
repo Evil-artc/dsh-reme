@@ -372,7 +372,13 @@ export function registerAutoRecall(ctx, client, config) {
             log?.debug?.(`dsh-reme: recalled ${recall.length} chars for ${agent.id} `
                 + `(assemblies=${state.stats.assemblies}, memoHits=${state.stats.memoHits})`);
             const contexts = Array.isArray(result?.contexts) ? result.contexts : [];
-            return { ...result, contexts: [...contexts, { name: 'reme-recall', text: recall }] };
+            // `interpolate: false` is required: memory passages are data, and any
+            // `{{name}}` inside them (template syntax, code snippets) must not be
+            // resolved as a prompt variable — an unknown one aborts assembly.
+            return {
+                ...result,
+                contexts: [...contexts, { name: 'reme-recall', text: recall, interpolate: false }],
+            };
         });
         state.disposers.push(toDisposable(dispose));
     }

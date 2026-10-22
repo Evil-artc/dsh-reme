@@ -127,7 +127,8 @@ $deps = '<DSH 安装目录>\resources\runtime\primary-runtime\dependencies'
 ## 自动记忆
 
 - **召回**：在 `system-prompt/assemble` 里按 agent 作用域注册，用最新用户输入检索；有硬超时，
-  失败或无命中就静默跳过，不影响对话。
+  失败或无命中就静默跳过，不影响对话。注入的上下文标记为 `interpolate: false`，记忆里的
+  `{{...}}` 不会被当成提示词变量解析。
 - **沉淀**：从耐久会话事件缓冲 user/assistant 转录，在 `agent/turn-stopping` 触发（每 N 轮 /
   字符阈值 / 空闲）；失败一律向"少写"倾斜：置信度过滤、本地相似度去重、凭据过滤、每小时限流、
   去重失败熔断。

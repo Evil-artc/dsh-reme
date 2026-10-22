@@ -260,8 +260,27 @@ await test('injects recall into the assembled prompt', async () => {
   assert.equal(client.calls.length, 1)
   assert.equal(result.contexts.length, 1)
   assert.equal(result.contexts[0].name, 'reme-recall')
+  assert.equal(result.contexts[0].interpolate, false)
   assert.match(result.contexts[0].text, /alpha memory body/)
   assert.match(result.contexts[0].text, /引用数据/)
+})
+
+await test('marks recall text literal so {{…}} in memory cannot break assembly', async () => {
+  const agent = createAgent('sess-template')
+  const client = createClient(() => {
+    const hit = structuredClone(HITS)
+    hit.hits = [{ ...HITS.hits[0], text: '搜索 page 占位：{{page}} 缺失' }]
+    return hit
+  })
+  const ctx = createCtx({ liveAgents: [agent] })
+  registerAutoRecall(ctx, client, config)
+
+  await say(ctx, 'sess-template', QUESTION)
+  const result = await assembleOn(agent)
+
+  assert.equal(result.contexts.length, 1)
+  assert.equal(result.contexts[0].interpolate, false)
+  assert.match(result.contexts[0].text, /\{\{page\}\}/)
 })
 
 await test('searches once per query across many steps of one turn', async () => {
